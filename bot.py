@@ -1,5 +1,6 @@
 import asyncio
 import os
+import re
 import logging
 from dotenv import load_dotenv
 import google.generativeai as genai
@@ -201,22 +202,51 @@ async def reset(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text("Начнём заново. Что на повестке?")
 
 
-async def call_gemini(history: list[dict], user_text: str, retries: int = 4) -> str:
+def _parse_retry_delay(exc: ResourceExhausted) -> int:
+    m = re.search(r"retry_delay\s*\{\s*seconds:\s*(\d+)", str(exc))
+    return int(m.group(1)) + 2 if m else 45
+
+
+async def _keep_typing(chat_id: int, context: ContextTypes.DEFAULT_TYPE, stop: asyncio.Event) -> None:
+    while not stop.is_set():
+        try:
+            await context.bot.send_chat_action(chat_id=chat_id, action="typing")
+        except Exception:
+            pass
+        await asyncio.sleep(4)
+
+
+async def call_gemini(
+    history: list[dict],
+    user_text: str,
+    chat_id: int,
+    context: ContextTypes.DEFAULT_TYPE,
+    retries: int = 3,
+) -> str:
     chat = build_chat(history)
     for attempt in range(retries):
+        stop_event = asyncio.Event()
+        typing_task = asyncio.create_task(_keep_typing(chat_id, context, stop_event))
         try:
-            response = chat.send_message(user_text)
+            response = await asyncio.get_event_loop().run_in_executor(
+                None, lambda: chat.send_message(user_text)
+            )
             return response.text
         except ResourceExhausted as e:
-            wait = 45 * (attempt + 1)
-            logger.warning("Rate limit hit (attempt %d/%d), waiting %ds: %s", attempt + 1, retries, wait, e)
+            wait = _parse_retry_delay(e)
+            logger.warning("Rate limit (attempt %d/%d), waiting %ds", attempt + 1, retries, wait)
             if attempt + 1 == retries:
                 raise
             await asyncio.sleep(wait)
+        finally:
+            stop_event.set()
+            typing_task.cancel()
+    raise RuntimeError("Unreachable")
 
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = update.effective_user.id
+    chat_id = update.effective_chat.id
     user_text = update.message.text
 
     if user_id not in user_sessions:
@@ -224,12 +254,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     history = user_sessions[user_id]
 
-    await context.bot.send_chat_action(
-        chat_id=update.effective_chat.id, action="typing"
-    )
-
     try:
-        reply = await call_gemini(history, user_text)
+        reply = await call_gemini(history, user_text, chat_id, context)
 
         history.append({"role": "user", "parts": [user_text]})
         history.append({"role": "model", "parts": [reply]})
@@ -241,7 +267,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     except ResourceExhausted:
         logger.error("Gemini quota exhausted for user %s", user_id)
-        await update.message.reply_text("Секунду, перегружен запросами. Напиши ещё раз через минуту.")
+        await update.message.reply_text("Слишком много запросов. Напиши через минуту.")
     except Exception as e:
         logger.error("Gemini error for user %s: %s", user_id, e)
         await update.message.reply_text("Технический сбой. Повтори.")
