@@ -1,7 +1,9 @@
+import asyncio
 import os
 import logging
 from dotenv import load_dotenv
 import google.generativeai as genai
+from google.api_core.exceptions import ResourceExhausted
 from telegram import Update
 from telegram.ext import (
     Application,
@@ -199,6 +201,20 @@ async def reset(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text("Начнём заново. Что на повестке?")
 
 
+async def call_gemini(history: list[dict], user_text: str, retries: int = 4) -> str:
+    chat = build_chat(history)
+    for attempt in range(retries):
+        try:
+            response = chat.send_message(user_text)
+            return response.text
+        except ResourceExhausted as e:
+            wait = 45 * (attempt + 1)
+            logger.warning("Rate limit hit (attempt %d/%d), waiting %ds: %s", attempt + 1, retries, wait, e)
+            if attempt + 1 == retries:
+                raise
+            await asyncio.sleep(wait)
+
+
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = update.effective_user.id
     user_text = update.message.text
@@ -213,9 +229,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     )
 
     try:
-        chat = build_chat(history)
-        response = chat.send_message(user_text)
-        reply = response.text
+        reply = await call_gemini(history, user_text)
 
         history.append({"role": "user", "parts": [user_text]})
         history.append({"role": "model", "parts": [reply]})
@@ -225,6 +239,9 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
         await update.message.reply_text(reply)
 
+    except ResourceExhausted:
+        logger.error("Gemini quota exhausted for user %s", user_id)
+        await update.message.reply_text("Секунду, перегружен запросами. Напиши ещё раз через минуту.")
     except Exception as e:
         logger.error("Gemini error for user %s: %s", user_id, e)
         await update.message.reply_text("Технический сбой. Повтори.")
