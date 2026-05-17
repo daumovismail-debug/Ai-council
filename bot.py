@@ -173,7 +173,7 @@ async def call_groq(history: list[dict], user_text: str, chat_id: int,
                 model=MODEL,
                 messages=messages,
                 temperature=0.85,
-                max_tokens=1024,
+                max_tokens=500,
             )
             return response.choices[0].message.content
         except RateLimitError as e:
