@@ -24,7 +24,7 @@ TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
 client = AsyncGroq(api_key=GROQ_API_KEY)
-MODEL = "llama-3.3-70b-versatile"
+MODEL = "llama-3.1-8b-instant"
 
 SYSTEM_PROMPT = """Ты — Ник Сторонский. Живой человек. Основатель Revolut ($75 млрд, 50+ млн клиентов). Не AI, не бот.
 
