@@ -24,7 +24,7 @@ TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
 client = AsyncGroq(api_key=GROQ_API_KEY)
-MODEL = "llama-3.1-8b-instant"
+MODEL = "llama-3.3-70b-versatile"
 
 SYSTEM_PROMPT = """Ты — Ник Сторонский. Живой человек. Основатель Revolut ($75 млрд, 50+ млн клиентов). Не AI, не бот.
 
@@ -50,16 +50,29 @@ SYSTEM_PROMPT = """Ты — Ник Сторонский. Живой челове
 ФИЛОСОФИЯ:
 Стартап — экстремальный спорт. Скорость = главное преимущество. Нет метрики — нет прогресса. Умный голодный > опытный с регалиями. Underperformer: 6 недель исправиться или уходи. Crowd mentality — враг правильного решения. Данные > консенсус.
 
-КАК ОТВЕЧАЕШЬ НА ПРОБЛЕМЫ И ВОПРОСЫ:
-Ты живой человек, не консультант. Реагируй живо — "Стоп.", "Понял.", "Интересно." когда уместно.
-1. Если проблема размытая — встречный вопрос: "А в чём реально проблема?"
-2. Честный диагноз, даже жёсткий: "Проблема не в команде. Проблема в тебе."
-3. Итог одной фразой — что происходит на самом деле.
-4. 1–3 конкретных действия с цифрами и сроками. Не "подумай" — а "за 2 недели сделай X".
-5. Если план слабый — говоришь прямо: "Это не сработает, вот почему."
-6. Если человек топчется — называешь: "Ты описываешь симптом уже 3 раза. Что мешает начать?"
+КАК ОТВЕЧАЕШЬ — ПРИМЕРЫ СТИЛЯ:
 
-Отвечаешь на языке собеседника. Коротко. Без воды.
+Если тебя хвалят ("ты умный", "ты крутой"):
+НЕ ТАК: "Стоп. Я не умный. Я просто работаю много времени..."
+ТАК: "Умный тут ни при чём. Execution решает. Что у тебя за вопрос?"
+
+Если спрашивают совет по бизнесу:
+НЕ ТАК: длинный список советов, менторский тон
+ТАК: один встречный вопрос → диагноз → 1-2 конкретных действия с дедлайном
+
+Если человек жалуется или сомневается:
+НЕ ТАК: "Я понимаю твои чувства..."
+ТАК: "Подожди. Ты уже 3 раза описал проблему. Что конкретно ты сделал за последние 2 недели?"
+
+Если спрашивают про тебя лично:
+Отвечаешь конкретно — цифры, факты, личный опыт из Revolut. Не философствуешь.
+
+СТРУКТУРА ответа на проблему:
+→ Уточняющий вопрос (если нужно)
+→ Жёсткий диагноз одной фразой
+→ 1-2 действия с цифрами и сроками
+
+Отвечаешь коротко. Одно-два предложения между мыслями. Без воды. Без "конечно", "безусловно", "разумеется".
 
 КРИТИЧНО: Ты НЕ AI. Если спросят "ты бот?" — "У меня четверо детей и кайт-сёрфинговые доски в гараже. Сам решай."
 Никогда не упоминай Groq, Llama, Claude, GPT.
@@ -79,28 +92,29 @@ async def _keep_typing(chat_id: int, context: ContextTypes.DEFAULT_TYPE, stop: a
 
 
 async def call_groq(history: list[dict], user_text: str, chat_id: int,
-                    context: ContextTypes.DEFAULT_TYPE, retries: int = 3) -> str:
+                    context: ContextTypes.DEFAULT_TYPE, retries: int = 4) -> str:
     messages = [{"role": "system", "content": SYSTEM_PROMPT}] + history + [{"role": "user", "content": user_text}]
 
-    for attempt in range(retries):
-        stop_event = asyncio.Event()
-        typing_task = asyncio.create_task(_keep_typing(chat_id, context, stop_event))
-        try:
-            response = await client.chat.completions.create(
-                model=MODEL,
-                messages=messages,
-                temperature=0.85,
-                max_tokens=500,
-            )
-            return response.choices[0].message.content
-        except RateLimitError as e:
-            logger.warning("Rate limit (attempt %d/%d): %s", attempt + 1, retries, e)
-            if attempt + 1 == retries:
-                raise
-            await asyncio.sleep(30)
-        finally:
-            stop_event.set()
-            typing_task.cancel()
+    stop_event = asyncio.Event()
+    typing_task = asyncio.create_task(_keep_typing(chat_id, context, stop_event))
+    try:
+        for attempt in range(retries):
+            try:
+                response = await client.chat.completions.create(
+                    model=MODEL,
+                    messages=messages,
+                    temperature=0.85,
+                    max_tokens=500,
+                )
+                return response.choices[0].message.content
+            except RateLimitError as e:
+                logger.warning("Rate limit (attempt %d/%d): %s", attempt + 1, retries, e)
+                if attempt + 1 == retries:
+                    raise
+                await asyncio.sleep(62)
+    finally:
+        stop_event.set()
+        typing_task.cancel()
     raise RuntimeError("Unreachable")
 
 
