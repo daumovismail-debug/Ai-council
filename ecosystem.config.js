@@ -1,0 +1,32 @@
+module.exports = {
+  apps: [
+    {
+      name: "storonsky-bot",
+      script: "bot.py",
+      interpreter: "python3",
+      cwd: __dirname,
+      restart_delay: 5000,
+      max_restarts: 10,
+      autorestart: true,
+      watch: false,
+      env_file: ".env",
+      log_date_format: "YYYY-MM-DD HH:mm:ss",
+      out_file: "logs/bot.out.log",
+      error_file: "logs/bot.err.log",
+    },
+    {
+      name: "storonsky-webhook",
+      script: "webhook_server.py",
+      interpreter: "python3",
+      cwd: __dirname,
+      restart_delay: 3000,
+      max_restarts: 10,
+      autorestart: true,
+      watch: false,
+      env_file: ".env",
+      log_date_format: "YYYY-MM-DD HH:mm:ss",
+      out_file: "logs/webhook.out.log",
+      error_file: "logs/webhook.err.log",
+    },
+  ],
+};
