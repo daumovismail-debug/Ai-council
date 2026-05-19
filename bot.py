@@ -337,6 +337,7 @@ async def run_agent(user_id: int, history: list[dict], user_text: str,
     stop_event = asyncio.Event()
     typing_task = asyncio.create_task(_keep_typing(chat_id, context, stop_event))
 
+    logger.info("[agent] START user=%s msg=%r", user_id, user_text[:80])
     try:
         for iteration in range(8):
             response = await client.messages.create(
@@ -348,7 +349,32 @@ async def run_agent(user_id: int, history: list[dict], user_text: str,
                 messages=messages,
             )
 
+            usage = getattr(response, "usage", None)
+            logger.info(
+                "[agent] user=%s iter=%s stop_reason=%s in=%s out=%s",
+                user_id, iteration + 1, response.stop_reason,
+                getattr(usage, "input_tokens", "?"),
+                getattr(usage, "output_tokens", "?"),
+            )
+            for block in response.content:
+                btype = getattr(block, "type", None)
+                if btype == "thinking":
+                    logger.info("[agent] user=%s -> ДУМАЕТ (thinking block)", user_id)
+                elif btype == "server_tool_use":
+                    logger.info(
+                        "[agent] user=%s -> ПОИСК В ИНТЕРНЕТЕ: %r",
+                        user_id, getattr(block, "input", {}),
+                    )
+                elif btype == "tool_use":
+                    logger.info(
+                        "[agent] user=%s -> ИНСТРУМЕНТ %s: %r",
+                        user_id, block.name, block.input,
+                    )
+
             if response.stop_reason == "end_turn":
+                logger.info(
+                    "[agent] user=%s ГОТОВ (итераций: %s)", user_id, iteration + 1
+                )
                 for block in response.content:
                     if hasattr(block, "type") and block.type == "text":
                         return block.text
@@ -369,8 +395,15 @@ async def run_agent(user_id: int, history: list[dict], user_text: str,
                                     block.input.get("category", "context"),
                                     block.input.get("note", ""),
                                 )
+                                logger.info(
+                                    "[agent] user=%s ЗАПОМНИЛ: %s",
+                                    user_id, block.input.get("note", ""),
+                                )
                             except Exception as e:
                                 result = f"error: {e}"
+                                logger.warning(
+                                    "[agent] user=%s remember FAILED: %s", user_id, e
+                                )
                             tool_results.append({
                                 "type": "tool_result",
                                 "tool_use_id": block.id,
