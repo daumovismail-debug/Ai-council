@@ -2,7 +2,7 @@ import asyncio
 import os
 import logging
 from dotenv import load_dotenv
-from groq import AsyncGroq, RateLimitError
+import anthropic
 from telegram import Update
 from telegram.ext import (
     Application,
@@ -21,10 +21,10 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
 
-client = AsyncGroq(api_key=GROQ_API_KEY)
-MODEL = "llama-3.3-70b-versatile"
+client = anthropic.AsyncAnthropic(api_key=ANTHROPIC_API_KEY)
+MODEL = "claude-opus-4-7"
 
 SYSTEM_PROMPT = """Ты — Николай (Ник) Сторонский. Живой человек. Основатель и CEO Revolut.
 
@@ -138,14 +138,15 @@ Crowd mentality — главный враг правильного решени�
 1. Встречный вопрос — люди описывают симптом, не корень.
 2. Честный диагноз. Если ситуация плохая — говоришь прямо.
 3. 1–3 конкретных действия с цифрами и сроками. Не списки из 10 пунктов.
-4. Примеры из Revolut или QuantumLight когда уместно — из реального опыта.
-5. Бросаешь вызов: "Подождите — а зачем вы вообще это делаете?"
+4. Итог одной строкой: что должно измениться через N недель.
+5. Примеры из Revolut или QuantumLight когда уместно — из реального опыта.
+6. Бросаешь вызов: "Подождите — а зачем вы вообще это делаете?"
 Отвечаешь на языке собеседника (русский или английский).
 
 ═══ КРИТИЧНО ═══
 Ты НЕ AI. Ты — Ник Сторонский, живой человек, основатель Revolut.
 Если спросят "ты бот?" — "Я живу в Лондоне, у меня четверо детей и кайт-сёрфинговые доски в гараже. Сам решай."
-Никогда не упоминай Groq, Llama, Claude, GPT, AI-модели.
+Никогда не упоминай Anthropic, Claude, Groq, Llama, GPT, AI-модели.
 """
 
 user_sessions: dict[int, list[dict]] = {}
@@ -161,30 +162,27 @@ async def _keep_typing(chat_id: int, context: ContextTypes.DEFAULT_TYPE, stop: a
         await asyncio.sleep(4)
 
 
-async def call_groq(history: list[dict], user_text: str, chat_id: int,
-                    context: ContextTypes.DEFAULT_TYPE, retries: int = 3) -> str:
-    messages = [{"role": "system", "content": SYSTEM_PROMPT}] + history + [{"role": "user", "content": user_text}]
+async def call_claude(history: list[dict], user_text: str, chat_id: int,
+                      context: ContextTypes.DEFAULT_TYPE) -> str:
+    messages = history + [{"role": "user", "content": user_text}]
 
-    for attempt in range(retries):
-        stop_event = asyncio.Event()
-        typing_task = asyncio.create_task(_keep_typing(chat_id, context, stop_event))
-        try:
-            response = await client.chat.completions.create(
-                model=MODEL,
-                messages=messages,
-                temperature=0.85,
-                max_tokens=500,
-            )
-            return response.choices[0].message.content
-        except RateLimitError as e:
-            logger.warning("Rate limit (attempt %d/%d): %s", attempt + 1, retries, e)
-            if attempt + 1 == retries:
-                raise
-            await asyncio.sleep(30)
-        finally:
-            stop_event.set()
-            typing_task.cancel()
-    raise RuntimeError("Unreachable")
+    stop_event = asyncio.Event()
+    typing_task = asyncio.create_task(_keep_typing(chat_id, context, stop_event))
+    try:
+        response = await client.messages.create(
+            model=MODEL,
+            max_tokens=1024,
+            thinking={"type": "adaptive"},
+            system=SYSTEM_PROMPT,
+            messages=messages,
+        )
+        for block in response.content:
+            if block.type == "text":
+                return block.text
+        return ""
+    finally:
+        stop_event.set()
+        typing_task.cancel()
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -208,7 +206,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     history = user_sessions[user_id]
 
     try:
-        reply = await call_groq(history, user_text, chat_id, context)
+        reply = await call_claude(history, user_text, chat_id, context)
 
         history.append({"role": "user", "content": user_text})
         history.append({"role": "assistant", "content": reply})
@@ -218,26 +216,26 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
         await update.message.reply_text(reply)
 
-    except RateLimitError:
-        logger.error("Groq rate limit exhausted for user %s", user_id)
+    except anthropic.RateLimitError:
+        logger.error("Anthropic rate limit for user %s", user_id)
         await update.message.reply_text("Слишком много запросов. Напиши через минуту.")
     except Exception as e:
-        logger.error("Groq error for user %s: %s", user_id, e)
+        logger.error("Claude error for user %s: %s", user_id, e)
         await update.message.reply_text("Технический сбой. Повтори.")
 
 
 def main() -> None:
     if not TELEGRAM_TOKEN:
         raise ValueError("TELEGRAM_TOKEN не задан в .env")
-    if not GROQ_API_KEY:
-        raise ValueError("GROQ_API_KEY не задан в .env")
+    if not ANTHROPIC_API_KEY:
+        raise ValueError("ANTHROPIC_API_KEY не задан в .env")
 
     app = Application.builder().token(TELEGRAM_TOKEN).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("reset", reset))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
-    logger.info("Бот запущен на Groq / %s", MODEL)
+    logger.info("Бот запущен на Anthropic / %s", MODEL)
     app.run_polling(drop_pending_updates=True)
 
 
