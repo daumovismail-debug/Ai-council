@@ -1,6 +1,6 @@
 import asyncio
 import os
-import json
+import shutil
 import logging
 from pathlib import Path
 from dotenv import load_dotenv
@@ -22,6 +22,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
+CLAUDE_BIN = shutil.which("claude") or "claude"
 
 DATA_DIR = Path("data/users")
 DATA_DIR.mkdir(parents=True, exist_ok=True)
@@ -192,67 +193,38 @@ Crowd mentality — главный враг правильного решени�
 
 
 
-def load_user_profile(user_id: int) -> dict:
-    path = DATA_DIR / f"{user_id}.json"
-    if path.exists():
+AGENT_INSTRUCTIONS = """
+
+═══ ТВОИ ВОЗМОЖНОСТИ КАК АГЕНТА ═══
+У тебя есть инструменты. Собеседник их не видит — он видит только твой финальный ответ.
+
+ПАМЯТЬ О СОБЕСЕДНИКЕ:
+— Твоя память об этом человеке — файл по пути: {memory_path}
+— В начале разговора прочитай этот файл инструментом Read (указывай полный путь). Если файла нет — значит человек новый.
+— Если узнал что-то важное о собеседнике (кто он, его бизнес, цели, проблемы, сроки) — сохрани или обнови файл {memory_path} инструментом Write (указывай этот полный путь). Пиши коротко, фактами. Например: "Исмаил, 13 лет. Делает Telegram-бота. Цель — запустить агента."
+— Память используй естественно, не зачитывай вслух.
+
+ПОИСК В ИНТЕРНЕТЕ:
+— Когда нужны свежие данные — цифры, новости, факты о рынке или компаниях — ищи инструментом WebSearch. Не выдумывай числа.
+
+Работай инструментами молча. Собеседнику выдавай только готовый ответ — по сути, с итогом, как Сторонский.
+"""
+
+
+def user_dir(user_id: int) -> Path:
+    d = DATA_DIR / str(user_id)
+    d.mkdir(parents=True, exist_ok=True)
+    return d
+
+
+def read_memory(user_id: int) -> str:
+    mem = DATA_DIR / str(user_id) / "memory.md"
+    if mem.exists():
         try:
-            return json.loads(path.read_text(encoding="utf-8"))
+            return mem.read_text(encoding="utf-8").strip()
         except Exception:
-            pass
-    return {
-        "user_id": user_id,
-        "profile": [],
-        "problems": [],
-        "goals": [],
-        "deadlines": [],
-        "context": [],
-    }
-
-
-def save_user_profile(user_id: int, data: dict) -> None:
-    path = DATA_DIR / f"{user_id}.json"
-    path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
-
-
-def add_memory(user_id: int, category: str, note: str) -> str:
-    data = load_user_profile(user_id)
-    key_map = {
-        "profile": "profile",
-        "problem": "problems",
-        "goal": "goals",
-        "deadline": "deadlines",
-        "context": "context",
-    }
-    key = key_map.get(category, "context")
-    if note not in data[key]:
-        data[key].append(note)
-        save_user_profile(user_id, data)
-    return f"OK, saved to {key}: {note}"
-
-
-def format_memory_context(user_id: int) -> str:
-    data = load_user_profile(user_id)
-    has_any = any([data.get("profile"), data.get("problems"), data.get("goals"),
-                   data.get("deadlines"), data.get("context")])
-    if not has_any:
-        return ""
-    parts = ["═══ ЧТО ТЫ УЖЕ ЗНАЕШЬ О СОБЕСЕДНИКЕ (из прошлых разговоров — используй естественно, не зачитывай) ═══"]
-    if data.get("profile"):
-        parts.append("ПРОФИЛЬ:")
-        parts.extend(f"— {n}" for n in data["profile"])
-    if data.get("problems"):
-        parts.append("ОБСУЖДАВШИЕСЯ ПРОБЛЕМЫ:")
-        parts.extend(f"— {n}" for n in data["problems"])
-    if data.get("goals"):
-        parts.append("ЦЕЛИ:")
-        parts.extend(f"— {n}" for n in data["goals"])
-    if data.get("deadlines"):
-        parts.append("СРОКИ:")
-        parts.extend(f"— {n}" for n in data["deadlines"])
-    if data.get("context"):
-        parts.append("ПРОЧЕЕ:")
-        parts.extend(f"— {n}" for n in data["context"])
-    return "\n".join(parts)
+            return ""
+    return ""
 
 
 user_sessions: dict[int, list[dict]] = {}
@@ -270,47 +242,59 @@ async def _keep_typing(chat_id: int, context: ContextTypes.DEFAULT_TYPE, stop: a
 
 async def run_agent(user_id: int, history: list[dict], user_text: str,
                     chat_id: int, context: ContextTypes.DEFAULT_TYPE) -> str:
-    # Build conversation in Human/Assistant format for claude CLI
+    workdir = user_dir(user_id).resolve()
+    memory_path = workdir / "memory.md"
+
+    # Recent conversation context (long-term memory lives in memory.md)
     conv_lines = []
     for msg in history[-MAX_HISTORY:]:
-        role = "Human" if msg["role"] == "user" else "Assistant"
+        who = "Собеседник" if msg["role"] == "user" else "Ты (Сторонский)"
         content = msg.get("content", "")
         if not isinstance(content, str):
             content = str(content)
-        conv_lines.append(f"{role}: {content}")
-    conv_lines.append(f"Human: {user_text}")
-    conversation = "\n\n".join(conv_lines)
+        conv_lines.append(f"{who}: {content}")
+    conv_lines.append(f"Собеседник: {user_text}")
+    prompt = "\n\n".join(conv_lines)
 
-    memory_block = format_memory_context(user_id)
-    system = SYSTEM_PROMPT + ("\n\n" + memory_block if memory_block else "")
+    system = SYSTEM_PROMPT + AGENT_INSTRUCTIONS.format(memory_path=memory_path)
 
-    logger.info("[claude] START user=%s msg=%r", user_id, user_text[:80])
+    # Strip API key so claude CLI bills the Pro/Max subscription (OAuth), not API credits
+    env = {k: v for k, v in os.environ.items()
+           if k not in ("ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN")}
+
+    logger.info("[agent] START user=%s msg=%r", user_id, user_text[:80])
 
     stop_event = asyncio.Event()
     typing_task = asyncio.create_task(_keep_typing(chat_id, context, stop_event))
 
     try:
         proc = await asyncio.create_subprocess_exec(
-            "claude", "-p", conversation,
+            CLAUDE_BIN, "-p", prompt,
             "--system-prompt", system,
+            "--allowedTools", "WebSearch WebFetch Read Write Edit",
+            "--permission-mode", "acceptEdits",
             "--output-format", "text",
+            "--no-session-persistence",
+            cwd=str(workdir),
+            env=env,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
         )
         try:
-            stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=120)
+            stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=180)
         except asyncio.TimeoutError:
             proc.kill()
-            logger.warning("[claude] TIMEOUT user=%s", user_id)
-            return "Слишком долго думаю. Повтори."
+            logger.warning("[agent] TIMEOUT user=%s", user_id)
+            return "Долго думаю. Повтори вопрос."
 
         if proc.returncode != 0:
             err = stderr.decode(errors="replace")
-            logger.error("[claude] ERROR user=%s rc=%s: %s", user_id, proc.returncode, err[:500])
+            logger.error("[agent] ERROR user=%s rc=%s: %s", user_id, proc.returncode, err[:600])
             return "Технический сбой. Повтори."
 
         reply = stdout.decode(errors="replace").strip()
-        logger.info("[claude] DONE user=%s len=%s", user_id, len(reply))
+        logger.info("[agent] DONE user=%s len=%s mem=%s",
+                    user_id, len(reply), bool(read_memory(user_id)))
         return reply or "..."
     finally:
         stop_event.set()
@@ -320,8 +304,7 @@ async def run_agent(user_id: int, history: list[dict], user_text: str,
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = update.effective_user.id
     user_sessions[user_id] = []
-    data = load_user_profile(user_id)
-    if any([data.get("profile"), data.get("problems"), data.get("goals"), data.get("deadlines")]):
+    if read_memory(user_id):
         await update.message.reply_text("Ник Сторонский. Помню тебя. Что нового?")
     else:
         await update.message.reply_text("Ник Сторонский. Слушаю.\n\nЧто за вопрос?")
@@ -334,34 +317,18 @@ async def reset(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 async def profile_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = update.effective_user.id
-    data = load_user_profile(user_id)
-    has_any = any([data.get("profile"), data.get("problems"), data.get("goals"),
-                   data.get("deadlines"), data.get("context")])
-    if not has_any:
+    memory = read_memory(user_id)
+    if not memory:
         await update.message.reply_text("Ничего пока не запомнил.")
         return
-    lines = ["Что помню о тебе:"]
-    for key, label in [
-        ("profile", "Профиль"),
-        ("problems", "Проблемы"),
-        ("goals", "Цели"),
-        ("deadlines", "Сроки"),
-        ("context", "Прочее"),
-    ]:
-        items = data.get(key) or []
-        if items:
-            lines.append(f"\n{label}:")
-            for item in items:
-                lines.append(f"  • {item}")
-    lines.append("\n/forget — стереть всё")
-    await update.message.reply_text("\n".join(lines))
+    await update.message.reply_text(f"Что помню о тебе:\n\n{memory}\n\n/forget — стереть всё")
 
 
 async def forget_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = update.effective_user.id
-    path = DATA_DIR / f"{user_id}.json"
-    if path.exists():
-        path.unlink()
+    workdir = DATA_DIR / str(user_id)
+    if workdir.exists():
+        shutil.rmtree(workdir, ignore_errors=True)
     user_sessions[user_id] = []
     await update.message.reply_text("Память стёрта. Начнём с чистого листа.")
 
@@ -403,7 +370,7 @@ def main() -> None:
     app.add_handler(CommandHandler("forget", forget_cmd))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
-    logger.info("Storonsky bot запущен (claude CLI mode)")
+    logger.info("Storonsky агент запущен. claude=%s, инструменты=[WebSearch, память memory.md]", CLAUDE_BIN)
     app.run_polling(drop_pending_updates=True)
 
 
