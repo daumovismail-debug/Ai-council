@@ -4,7 +4,6 @@ import json
 import logging
 from pathlib import Path
 from dotenv import load_dotenv
-import anthropic
 from telegram import Update
 from telegram.ext import (
     Application,
@@ -23,10 +22,6 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
-ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
-
-client = anthropic.AsyncAnthropic(api_key=ANTHROPIC_API_KEY)
-MODEL = "claude-opus-4-7"
 
 DATA_DIR = Path("data/users")
 DATA_DIR.mkdir(parents=True, exist_ok=True)
@@ -195,42 +190,6 @@ Crowd mentality — главный враг правильного решени�
 Никогда не упоминай Anthropic, Claude, Groq, GPT, AI-модели.
 """
 
-TOOLS = [
-    {
-        "type": "web_search_20250305",
-        "name": "web_search",
-        "max_uses": 3,
-    },
-    {
-        "name": "remember",
-        "description": (
-            "Сохрани важный факт о собеседнике в постоянную память — будет доступен в будущих разговорах. "
-            "Используй когда собеседник рассказал что-то существенное про себя, свой бизнес, проблему, цель или дедлайн. "
-            "Один вызов = одна заметка. Не сохраняй мелочи и эмоции — только то, что поможет в будущем разговоре."
-        ),
-        "input_schema": {
-            "type": "object",
-            "properties": {
-                "category": {
-                    "type": "string",
-                    "enum": ["profile", "problem", "goal", "deadline", "context"],
-                    "description": (
-                        "profile — кто человек, чем занимается, его бизнес/работа. "
-                        "problem — конкретная проблема которую обсуждали. "
-                        "goal — цель которую поставил. "
-                        "deadline — конкретный срок чего-либо. "
-                        "context — прочее важное."
-                    ),
-                },
-                "note": {
-                    "type": "string",
-                    "description": "Сам факт, краткой формулировкой. Например: 'Основатель SaaS-стартапа, 15 человек, MRR $50k, 2 года на рынке'",
-                },
-            },
-            "required": ["category", "note"],
-        },
-    },
-]
 
 
 def load_user_profile(user_id: int) -> dict:
@@ -309,114 +268,50 @@ async def _keep_typing(chat_id: int, context: ContextTypes.DEFAULT_TYPE, stop: a
         await asyncio.sleep(4)
 
 
-def _content_to_serializable(content):
-    result = []
-    for block in content:
-        if hasattr(block, "model_dump"):
-            result.append(block.model_dump())
-        elif isinstance(block, dict):
-            result.append(block)
-    return result
-
-
 async def run_agent(user_id: int, history: list[dict], user_text: str,
                     chat_id: int, context: ContextTypes.DEFAULT_TYPE) -> str:
-    messages = list(history) + [{"role": "user", "content": user_text}]
+    # Build conversation in Human/Assistant format for claude CLI
+    conv_lines = []
+    for msg in history[-MAX_HISTORY:]:
+        role = "Human" if msg["role"] == "user" else "Assistant"
+        content = msg.get("content", "")
+        if not isinstance(content, str):
+            content = str(content)
+        conv_lines.append(f"{role}: {content}")
+    conv_lines.append(f"Human: {user_text}")
+    conversation = "\n\n".join(conv_lines)
 
     memory_block = format_memory_context(user_id)
-    system_blocks = [
-        {
-            "type": "text",
-            "text": SYSTEM_PROMPT,
-            "cache_control": {"type": "ephemeral"},
-        }
-    ]
-    if memory_block:
-        system_blocks.append({"type": "text", "text": memory_block})
+    system = SYSTEM_PROMPT + ("\n\n" + memory_block if memory_block else "")
+
+    logger.info("[claude] START user=%s msg=%r", user_id, user_text[:80])
 
     stop_event = asyncio.Event()
     typing_task = asyncio.create_task(_keep_typing(chat_id, context, stop_event))
 
-    logger.info("[agent] START user=%s msg=%r", user_id, user_text[:80])
     try:
-        for iteration in range(8):
-            response = await client.messages.create(
-                model=MODEL,
-                max_tokens=2048,
-                thinking={"type": "adaptive"},
-                tools=TOOLS,
-                system=system_blocks,
-                messages=messages,
-            )
+        proc = await asyncio.create_subprocess_exec(
+            "claude", "-p", conversation,
+            "--system-prompt", system,
+            "--output-format", "text",
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+        try:
+            stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=120)
+        except asyncio.TimeoutError:
+            proc.kill()
+            logger.warning("[claude] TIMEOUT user=%s", user_id)
+            return "Слишком долго думаю. Повтори."
 
-            usage = getattr(response, "usage", None)
-            logger.info(
-                "[agent] user=%s iter=%s stop_reason=%s in=%s out=%s",
-                user_id, iteration + 1, response.stop_reason,
-                getattr(usage, "input_tokens", "?"),
-                getattr(usage, "output_tokens", "?"),
-            )
-            for block in response.content:
-                btype = getattr(block, "type", None)
-                if btype == "thinking":
-                    logger.info("[agent] user=%s -> ДУМАЕТ (thinking block)", user_id)
-                elif btype == "server_tool_use":
-                    logger.info(
-                        "[agent] user=%s -> ПОИСК В ИНТЕРНЕТЕ: %r",
-                        user_id, getattr(block, "input", {}),
-                    )
-                elif btype == "tool_use":
-                    logger.info(
-                        "[agent] user=%s -> ИНСТРУМЕНТ %s: %r",
-                        user_id, block.name, block.input,
-                    )
+        if proc.returncode != 0:
+            err = stderr.decode(errors="replace")
+            logger.error("[claude] ERROR user=%s rc=%s: %s", user_id, proc.returncode, err[:500])
+            return "Технический сбой. Повтори."
 
-            if response.stop_reason == "end_turn":
-                logger.info(
-                    "[agent] user=%s ГОТОВ (итераций: %s)", user_id, iteration + 1
-                )
-                for block in response.content:
-                    if hasattr(block, "type") and block.type == "text":
-                        return block.text
-                return ""
-
-            if response.stop_reason == "tool_use":
-                messages.append({
-                    "role": "assistant",
-                    "content": _content_to_serializable(response.content),
-                })
-                tool_results = []
-                for block in response.content:
-                    if hasattr(block, "type") and block.type == "tool_use":
-                        if block.name == "remember":
-                            try:
-                                result = add_memory(
-                                    user_id,
-                                    block.input.get("category", "context"),
-                                    block.input.get("note", ""),
-                                )
-                                logger.info(
-                                    "[agent] user=%s ЗАПОМНИЛ: %s",
-                                    user_id, block.input.get("note", ""),
-                                )
-                            except Exception as e:
-                                result = f"error: {e}"
-                                logger.warning(
-                                    "[agent] user=%s remember FAILED: %s", user_id, e
-                                )
-                            tool_results.append({
-                                "type": "tool_result",
-                                "tool_use_id": block.id,
-                                "content": result,
-                            })
-                if tool_results:
-                    messages.append({"role": "user", "content": tool_results})
-                continue
-
-            logger.warning("Unexpected stop_reason: %s", response.stop_reason)
-            break
-
-        return "Технический сбой в цикле. Повтори."
+        reply = stdout.decode(errors="replace").strip()
+        logger.info("[claude] DONE user=%s len=%s", user_id, len(reply))
+        return reply or "..."
     finally:
         stop_event.set()
         typing_task.cancel()
@@ -492,9 +387,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
         await update.message.reply_text(reply)
 
-    except anthropic.RateLimitError:
-        logger.error("Anthropic rate limit for user %s", user_id)
-        await update.message.reply_text("Слишком много запросов. Напиши через минуту.")
     except Exception as e:
         logger.error("Agent error for user %s: %s", user_id, e, exc_info=True)
         await update.message.reply_text("Технический сбой. Повтори.")
@@ -503,8 +395,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 def main() -> None:
     if not TELEGRAM_TOKEN:
         raise ValueError("TELEGRAM_TOKEN не задан в .env")
-    if not ANTHROPIC_API_KEY:
-        raise ValueError("ANTHROPIC_API_KEY не задан в .env")
 
     app = Application.builder().token(TELEGRAM_TOKEN).build()
     app.add_handler(CommandHandler("start", start))
@@ -513,7 +403,7 @@ def main() -> None:
     app.add_handler(CommandHandler("forget", forget_cmd))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
-    logger.info("Storonsky agent запущен на %s с tools=[web_search, remember]", MODEL)
+    logger.info("Storonsky bot запущен (claude CLI mode)")
     app.run_polling(drop_pending_updates=True)
 
 
