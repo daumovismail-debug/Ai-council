@@ -453,6 +453,7 @@ async def run_agent(user_id: int, history: list[dict], user_text: str,
     try:
         proc = await asyncio.create_subprocess_exec(
             CLAUDE_BIN, "-p", prompt,
+            "--model", "claude-opus-4-7",
             "--system-prompt", system,
             "--allowedTools", "WebSearch WebFetch Read Write Edit",
             "--permission-mode", "acceptEdits",
