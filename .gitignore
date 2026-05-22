@@ -6,3 +6,5 @@ __pycache__/
 venv/
 logs/
 server_install.sh
+data/rag_store/
+data/users/

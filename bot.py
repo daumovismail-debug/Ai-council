@@ -13,6 +13,14 @@ from telegram.ext import (
     ContextTypes,
 )
 
+try:
+    from rag import rag_query, collection_count
+    RAG_ENABLED = True
+except Exception:
+    RAG_ENABLED = False
+    def rag_query(q: str) -> str: return ""  # noqa: E731
+    def collection_count() -> int: return 0  # noqa: E731
+
 load_dotenv()
 
 logging.basicConfig(
@@ -439,7 +447,25 @@ async def run_agent(user_id: int, history: list[dict], user_text: str,
     conv_lines.append(f"Собеседник: {user_text}")
     prompt = "\n\n".join(conv_lines)
 
-    system = SYSTEM_PROMPT + AGENT_INSTRUCTIONS.format(memory_path=memory_path)
+    # RAG: pull relevant chunks from transcript archive
+    rag_context = ""
+    if RAG_ENABLED and collection_count() > 0:
+        loop = asyncio.get_event_loop()
+        try:
+            rag_context = await loop.run_in_executor(None, rag_query, user_text)
+        except Exception as _rag_err:
+            logger.warning("[rag] query error: %s", _rag_err)
+
+    if rag_context:
+        rag_block = (
+            "\n\n═══ ЕГО РЕАЛЬНЫЕ СЛОВА ИЗ АРХИВА ИНТЕРВЬЮ (релевантно теме вопроса) ═══\n"
+            + rag_context
+            + "\n═══ ЭТО ТВОИ РЕАЛЬНЫЕ СЛОВА ИЗ РЕАЛЬНЫХ ИНТЕРВЬЮ — ОТВЕЧАЙ ОТСЮДА ═══\n"
+        )
+    else:
+        rag_block = ""
+
+    system = SYSTEM_PROMPT + rag_block + AGENT_INSTRUCTIONS.format(memory_path=memory_path)
 
     # Strip API key so claude CLI bills the Pro/Max subscription (OAuth), not API credits
     env = {k: v for k, v in os.environ.items()
@@ -517,6 +543,14 @@ async def forget_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
     await update.message.reply_text("Память стёрта. Начнём с чистого листа.")
 
 
+async def rag_status_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if not RAG_ENABLED:
+        await update.message.reply_text("RAG не активен (chromadb не установлен).")
+        return
+    n = collection_count()
+    await update.message.reply_text(f"RAG активен. Чанков в базе: {n}.")
+
+
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = update.effective_user.id
     chat_id = update.effective_chat.id
@@ -552,9 +586,13 @@ def main() -> None:
     app.add_handler(CommandHandler("reset", reset))
     app.add_handler(CommandHandler("profile", profile_cmd))
     app.add_handler(CommandHandler("forget", forget_cmd))
+    app.add_handler(CommandHandler("rag", rag_status_cmd))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
-    logger.info("Storonsky агент запущен. claude=%s, инструменты=[WebSearch, память memory.md]", CLAUDE_BIN)
+    logger.info(
+        "Storonsky агент запущен. claude=%s, RAG=%s (chunks=%d), инструменты=[WebSearch, память memory.md]",
+        CLAUDE_BIN, RAG_ENABLED, collection_count(),
+    )
     app.run_polling(drop_pending_updates=True)
 
 
