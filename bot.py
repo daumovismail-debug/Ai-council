@@ -1,5 +1,6 @@
 import asyncio
 import os
+import re
 import shutil
 import logging
 from pathlib import Path
@@ -230,12 +231,73 @@ async def run_agent(user_id: int, history: list[dict], user_text: str,
             return "Технический сбой. Повтори."
 
         reply = stdout.decode(errors="replace").strip()
-        logger.info("[agent] DONE user=%s len=%s mem=%s",
-                    user_id, len(reply), bool(read_memory(user_id)))
+        reply = _storonsky_trim(reply)
+
+        # Second pass: rewrite only if still too long after trim
+        word_count = len(reply.split())
+        if word_count > 120:
+            reply = await _storonsky_rewrite(reply, env, workdir)
+
+        logger.info("[agent] DONE user=%s words=%s mem=%s",
+                    user_id, len(reply.split()), bool(read_memory(user_id)))
         return reply or "..."
     finally:
         stop_event.set()
         typing_task.cancel()
+
+
+def _storonsky_trim(text: str) -> str:
+    """Fast Python pass: strip AI filler openers, hard-cap at 6 sentences."""
+    # Strip common AI openers
+    text = re.sub(
+        r'^(Certainly[,!.]?|Sure[,!.]?|Of course[,!.]?|Absolutely[,!.]?|'
+        r'Great question[!.]?|Interesting question[!.]?|Good question[!.]?|'
+        r'Конечно[,!.]?|Безусловно[,!.]?|Отличный вопрос[!.]?|'
+        r'Хороший вопрос[!.]?|Интересный вопрос[!.]?)\s*',
+        '', text, flags=re.IGNORECASE
+    ).strip()
+
+    # Split on sentence boundaries (handles .!? followed by space+capital)
+    parts = re.split(r'(?<=[.!?])\s+(?=[А-ЯA-Z"«])', text)
+    if len(parts) > 6:
+        text = ' '.join(parts[:6]).strip()
+        # Add closing marker if missing
+        if not text.endswith(('.', '!', '?')):
+            text += '.'
+    return text
+
+
+REWRITE_SYSTEM = (
+    "Ты — Николай Сторонский. Этот ответ твой, но он слишком длинный. "
+    "Перепиши его в 2–3 предложения максимум. Сухо. Рублено. Только суть. "
+    "Никаких буллетов. Никаких списков. Заканчивай 'Вот.' если нужно. "
+    "Выдай ТОЛЬКО переписанный текст — без пояснений, без преамбулы."
+)
+
+
+async def _storonsky_rewrite(reply: str, env: dict, workdir: Path) -> str:
+    """Second-pass rewrite for responses that are too long. Fast model, 30s timeout."""
+    try:
+        proc = await asyncio.create_subprocess_exec(
+            CLAUDE_BIN, "-p", reply,
+            "--model", "claude-opus-4-7",
+            "--system-prompt", REWRITE_SYSTEM,
+            "--output-format", "text",
+            "--no-session-persistence",
+            cwd=str(workdir),
+            env=env,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+        stdout, _ = await asyncio.wait_for(proc.communicate(), timeout=45)
+        if proc.returncode == 0:
+            trimmed = stdout.decode(errors="replace").strip()
+            if trimmed:
+                logger.info("[rewrite] condensed %d→%d words", len(reply.split()), len(trimmed.split()))
+                return trimmed
+    except Exception as e:
+        logger.warning("[rewrite] failed: %s", e)
+    return reply
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
