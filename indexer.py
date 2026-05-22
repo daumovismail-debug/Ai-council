@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python33
 """
 CLI tool to index transcript .txt files into the RAG vector store.
 
