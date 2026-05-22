@@ -1,0 +1,629 @@
+[Music]
+all right good morning everyone thanks
+for being here uh I'm Martin moo I'm one
+of the partners at index Ventures uh
+index is an early stage Tech investment
+firm investing across uh Israel Europe
+and the us as one team globally based
+between London New York where I am based
+and San Francisco and we've been
+investing in early stat tech for the
+past uh three decades and we've been
+fortunate enough to work closely with
+Nick from uh from revolute for almost a
+decade uh as well well so Nick I'm
+really super excited to be here with you
+today there's uh there's tons to talk
+about a lot of news at revolute I still
+remember the first time I met you which
+was uh in 2015 you were pitching at sit
+camp and at the time it was in shage I
+still remember in London and at the time
+I was banking with
+HSBC and things were so bad that every
+time I had to make a transfer I was
+booking a slot of 20 minutes in my
+calendar and that was really terrible so
+I try I downloaded the app tried it and
+realized I could do it in 20 seconds
+instead of 20 minutes and for free and
+that's where I realized this is really
+something special and we need to be
+investing in this company since then 8
+eight or nine years later the company
+has grown this simple app that was doing
+mostly FX has grown a lot across all
+dimensions new products new GEOS and
+financially so yesterday you announced
+your 50 million customer Mark congrats
+on that amazing achievement uh last year
+you announced more than $2 billion in in
+Revenue than half a billion pounds and
+and more than two um more than half a
+billion in uh in net income you are the
+fastest growing the most downloaded
+Financial app in Europe across 20
+countries and uh and very recently you
+also uh concluded a secondary at 45
+billion doar valuation which makes you
+the uh most valuable private tech
+company in Europe so congrats on all of
+that when you're hearing all those
+Milestones do you take time to celebrate
+them or you already focus on the next
+one and what is the next
+one well I mean obviously if you achieve
+something great uh yeah you need to
+celebrate but for me it's like five
+minutes happiness and you know I move on
+to to new big thing and you have a big
+party actually coming for the for your
+50 million we have 50 million Parts in
+London yes
+and um so if you look at revolute today
+you know 45 billion you've reached this
+incredible uh scale and and success does
+it look like what you had in mind when
+you got started with the business is it
+pretty much where you thought you would
+be there or is it very different well to
+be honest you when I started I didn't
+really think ahead what will be in 5 10
+years I I was just trying to survive as
+a
+business and um yeah it's uh pretty
+simple we back then when we started we
+just had the 3 months view what we need
+to build in 3 months and then we build
+it and then move on for next 3 months so
+we never had like you know longterm
+Horizon long-term planning so we were
+just trying to survive try to build the
+features products that people want and
+it was actually very very short-term
+driven rather than longterm and is it
+still the same or has it changed as
+you've grown uh bigger uh as we grow
+bigger we we started planning uh for
+longer time frame we still uh like plan
+precisely for probably a quarter quarter
+to a year and then longer term
+plans I me in reality we try to do it
+but uh it never works you know something
+pops
+up director resources yeah so if you
+were to paint a picture of where re
+where you see revolute kind of long term
+uh the direction it's going can you can
+you do that or not even uh yeah I mean
+uh if if you think in numbers we we just
+want rev to be uh number one uh global
+bank in 100 countries with 100 million
+daily active customers and then 100
+billion revenues a year so it's
+definitely doable because Market is so
+huge and banks are very fragmented I
+would say so they not really competing
+globally and and you personally what is
+that you achieved a lot um what is still
+your personal
+ambition well I mean the there's not
+much else to do right
+so so I I keep doing
+it do you uh can you just maybe describe
+for the people here what does a typical
+day for you look
+like well it depends on the day on the
+week so I mean usually on Mondays I do
+um business reviews for key departments
+uh half of Tuesday is also business
+reviews and what what is Business Review
+can so Business Review is like
+standardized approach for every single
+department when general managers report
+on kpis metrics road map problem so 15
+to 30 minutes uh for each department
+then half Tuesdays uh uh product reviews
+all of Wednesdays product reviews and I
+start also one-on once on Thursday and
+product reviews what how does that work
+so product review is uh uh every single
+product team or majority of product
+teams they present uh how they want to
+change uh their product clients screen
+by screen in uh
+figma and you still
+yeah still very involved yes I approve
+yeah you still approve everything and
+yes I still command I still work with
+the designers I still go down to kind of
+you know each indidual contributor if I
+want to change something so you never
+got out of the funder mode for you that
+was always nothing thing is super
+important I think as soon you start
+tradition manage uh I think uh it's the
+beginning of the end for the company
+because reality is super important for
+every single manager to uh uh well to be
+strategic but also to be in detail and
+then going down to the level of
+individual
+contributor uh through all the
+management
+layers uh to see what what reality is
+right because problem is with majority
+of managers they are not into details as
+a result they cannot direct well and so
+you've got about 40 direct reports like
+a bit more yeah like 40 45 yeah 40 45
+yeah who who are there well every single
+general manager responsible for pel for
+uh products so because we have many
+products in the company so we have
+probably up to 15 general
+managers then uh a person responsible
+and what is a product give us like like
+product for example it's retail account
+business account uh wealth and trading
+uh crypto acquiring uh credit okay so
+major major products yeah uh so then uh
+I've got uh core functions uh reporting
+into me uh like people
+uh uh technology uh core uh my kind of
+you know own team we call it core uh and
+so on so overall if you look it's 40 45
+people or plus new territor here was
+also report directly to me because uh I
+think it's very good when you hire a c
+for the territory to to report directly
+to F because they they Lear much faster
+what's your core team you say I have my
+own core team what what is that uh it's
+started with fond Associates I think I'm
+the first one in the market who invented
+the concept of fond Associates uh
+because um I was cheap of Staff no
+what's the difference well basically
+when when when when the company killed
+of more than 100 people and then I hired
+all this uh experienced Executives I
+realized it doesn't work all this
+experienced executive failed miserably
+so I need to fix things so I end up
+hiring my own team of uh eight people
+like just smart bright uh young people X
+McKinzie X ban or X Investment Banking
+have you know hung and design know to
+build things then I just dropped one or
+two people for each of the problem on on
+each of the problems I face or on each
+on departments that need turn around
+that's how I kind of invented the
+concept of f asses um now it's probably
+a 30 40 people team uh some of them
+report to me some of them report to
+Chief of Staff but uh the job they do is
+still the same is a turn
+around makes sense on so on top of your
+D you also recently launched uh your own
+family off/ Venture fund called Quantum
+Light so what's the philosophy behind it
+how does it work I mean it's a very
+disruptive approach to venture capital
+in particular I don't know about the
+other asset class but is for Venture and
+also what's the goal behind it is it is
+it Financial return is it giving back to
+the ecosystem is it keeping your pulse
+on
+Innovation uh so basically yes I have
+family office and then I have a
+standalone business called Quantum Light
+so quantum light is a venture fund which
+invest in startups uh but it invests
+based on the uh models rather than human
+judgment so the way it works about 3
+years ago I uh I build a very small team
+uh which uh collected a lot of data on
+startups and then they trained the
+machine learning model on data since
+1990s and then the data can be uh who's
+the founder who invested in the company
+uh is the founder like you know stem
+nonstem age and so on so we collected
+about 300 features uh across uh um every
+single startup we trained the model uh
+on the data since 1990s and then
+effectly the model predicts uh which
+startups to invest so it's completely
+outbound investment you do not really
+need to kind of dive deep in the company
+uh it just gives you a list of companies
+to
+invest uh and uh yeah it works well so I
+I launched it two years ago um uh we've
+done I think more than 12 Investments
+now team is uh 20 25 uh people majority
+are data scientists data Engineers so
+it's Standalone business uh I'm not
+involved daily so there is IIA who is
+the CEO of this business but I help how
+again and there's a I mean I think it's
+a really super interesting disruptive
+approach especially for kind of a series
+B when you have enough data to kind of
+identify interesting companies but the
+other thing that's really cool that you
+do with quantum is you started
+publishing these playbooks which is
+basically kind of open sourcing what you
+learn from revolute and and how you
+build the company and I've been you know
+I wrote a LinkedIn post about it if if
+you folks want to check it out uh your
+first Playbook was about performance and
+how you manage performance at revolute I
+recommend everyone and all the
+entrepreneur I work with to read it
+because I think it's really interesting
+and and really good um but do you want
+to talk to us a little bit about how you
+what's in this Playbook and how you
+manage performance and how much you
+obsess about it and how you measure it
+and implement it as a process because I
+think it's such a key part of the
+success of
+revolute yeah so uh basically when I
+started the revolute 10 years ago uh I
+didn't believe in management at all and
+then I remember a lot of V that told me
+I need to hire experienced managers and
+I was I was always asking him what what
+exactly they will do just Manish people
+no I need people build products right or
+or sell the
+product uh anyway so so with time I
+learned that action management is
+important and U but I learned it from
+first principles and
+uh basically I quantify uh everything
+what a person does a team does a
+department does a company does so the
+way it works it starts with a with a
+company goal so we always Define uh five
+six company goals for the year uh and
+then we cascate these goals uh to the
+department and on the team level and
+individual level and then we build the
+uh the whole software around it is
+called the revolute people uh and we
+actually selling it now to um to other
+companies so revolute people.com and
+then effec revolute people
+uh Play Books everything what we do in
+terms of goal setting hiring uh
+scorecards for hiring people scorecards
+for Performance Management uh
+performance review how to do performance
+review we do performance review every
+quarter super important so we calculate
+effectively how many strong people we
+have how many average people we have how
+many people we have below average so we
+have system filtering out people who are
+not performing on a qualily basis so so
+it's a proper machine which uh uh with
+the only goal to produce the best
+quality people that we have in revolute
+and it's all kind of you know
+quantifiable it's all very process
+driven it's all very producti as well
+and uh in Quantum Light uh we
+effectively uh wrote all the playbooks
+that we with time developed in revolute
+how to manage people how to hire people
+how to do expansion how to do compliance
+uh how to do risk management and so on
+because with time because I I approach
+everything from first principles since I
+kind of hired experience executive it
+didn't work for me so I stopped
+believing in you know traditional
+approach of hiring experienced people so
+I develop everything from scratch just
+based on my experience and of course you
+know things um didn't work as expected
+so I itated itated itated until I kind
+of found the the best way to do XYZ and
+the and we uh kind of documented
+everything in playbooks and you think
+those playbooks could apply to any
+company and any type of funer or do you
+think you have to be a special type of
+funer and Company for that to to really
+work yeah I think uh it can apply to
+almost any scale up right to because
+reality if a company is small 10 20 30
+up to 50 maybe 100 people you do not
+really need to have a processes because
+you know everyone right you know who is
+good who is not as soon as you more than
+100 people then yes you need to have
+process in place so I think for
+companies more than 50 to 100 people it
+is applicable to every single company
+because reality as a as as a manager or
+as a Founder you need to know exactly
+what every single person is doing in the
+company at this particular point of time
+uh so it's super important otherwise
+people start working on the wrong things
+otherwise people start being lazy they
+focus on things that are not important
+to the company it's super important to
+Quant ify everything and ensuring that
+uh people a all run in the right
+direction and B they all run very
+hard yeah the you mentioned the word
+first principle quite a few times and
+you know it's a word that's being
+overused these days but I think in your
+case it really does apply and I think
+that's something I really always hugely
+admired in you is that you you never
+took and I was one of the you know old
+VCS I was telling you to hire
+experienced people so you know I was on
+the wrong end of that I I'm I'm happy to
+admit it but you really always took that
+first principal approach and and and did
+thing your own way in a very you know
+you got to a very successful and also
+very unique outcome something that
+really fits yourself and and um and
+revolute but you also had some
+Inspirations you know I think you know
+you mentioned red alio kind of principle
+you know early on in your journey is
+that still an inspiration of you have
+you added some more and also more
+broadly who do you go to when you are
+thinking through a problem you just do
+it on your own in you know dark room or
+do you still ask for some feedback from
+some specific people who may have gone
+through the same Journey yeah remember
+principal so I read it maybe more than
+10 years ago when it was just PDF of 50
+pages I really loved it because it was
+not uh it was very direct it wasn't PR
+polished and then uh I think 5 years
+later he published a book yeah which is
+now like 400 pages is very P polished so
+I I don't recommend reading it it's so
+much worse compared to initial like
+principles that had in PDF uh and uh
+yeah I think uh like what what he wrote
+makes sense and uh you know really kind
+of not use it but uh yeah sometimes you
+know applied it in my own way influenced
+the way you it influenced you know the
+way I thought but I think it's more my
+education because I I kind of you know
+studed physics math so I I learned to
+model life right and then I always kind
+of you know model uh any aspects of life
+in a in a in a quantitative way how the
+company should operate how person should
+operate how you need to invest as well
+with with Quantum Light
+yeah
+and I think I kind of know the answer
+but there's something that that I really
+wanted to ask you which was when you
+started a company early on you made
+three very big strategic
+decisions which were one is going
+multicountry which is definitely you
+know was totally contrarian to anything
+that people were doing in fintech at the
+time the the conventional wisdom was
+fintech is very localized there's a lot
+of Regulation you have to be one country
+you can't do multiple countries the
+other one was doing multiproduct it was
+like even most oh you either do consumer
+or businesses you decided to do both and
+then the third one is you built almost
+everything in house which was very
+unusual it was a time where you had to
+buy everything up the Shelf other s
+providers and you never really did that
+I mean you did for some aspects you the
+processing for a while was was third
+party but today most of your stack is
+built in house everything is and so
+those and those three decisions were
+very uh unique very contrarian and
+eventually they turned out to be right
+and how but it's not really something
+that you can iterate like you made them
+and then you leave through them how did
+you how did you make those decisions
+early how do you know that that was the
+right thing to
+do uh well first of all I'm very
+controlling right I I just hate uh
+outside dependencies which I don't want
+to control and uh as a result because
+I'm very controlling I early on you know
+brought everything in house cuz uh in
+business if you are dependent on some
+critical vendor I mean it can kill you
+right and uh you need to go and then beg
+a vendor to I don't know solve some bugs
+or it just it's not worth it right so
+this this decision to to bring
+everything house and then going uh
+multicountry multiproduct
+uh I think it's more my nature right so
+I like uh trying things and uh I learned
+very early on that no matter how smart
+you are just I cannot predict what
+happens so for me the best way just uh
+try things and then uh if I feel or if I
+get some you know quantitative feedback
+that uh make it works you know I I
+continue going the same direction and
+then if if I try things and it doesn't
+work you know it's fine I mean no no
+kind of strings of right and to and
+today of the this question of global
+versus local because the argument of it
+should be a local business because it's
+locally regulated is is a valid argument
+it is but also arguments on the other
+side and so where do you standing that
+band and what are the advantages that
+you have by being you know so so
+broad yeah I think you you can uh uh you
+can achieve your goals in uh being local
+and then being Global as well it just
+being Global is much more difficult
+right and then uh I I decided for myself
+that I want to be Global because it's uh
+for it's more meaningful goal more
+profitable and larger business yes it's
+much more difficult to build but why not
+and so we've talked about all the things
+that you've done right a lot of big
+strategic decisions that you got right
+the most important one I would say are
+they are there any other big strategic
+decisions you got
+wrong well many to be honest with you
+like for example um for a long time I
+wanted to be as less regulated as
+possible it was completely wrong
+decision uh I think it would be much
+easier for us to receive all the bank El
+that we needed when we were small with a
+small number of customers that's CU
+reality when you have like 10 20 30
+million of customers 50 million of
+customers now every single regulator uh
+like scrutinizes you a lot before giving
+the license if you have only I don't
+know 100,000 customers for them it's
+super easy to to give a license because
+uh it's much less riskier for them so
+that was you know wrong decision um like
+another wrong decision was uh the way
+we've done expansion as well uh so
+following this principle of uh launching
+things super fast uh it actually doesn't
+work for expansion because uh when you
+launch things super fast we go for light
+a license like you know e-man money
+transfer um then your product becomes uh
+much less comprehensive compared to
+banking product and as a result there is
+not that much product Market fit so we
+had to redo the whole expansion uh later
+right so we wasted a lot of resources
+and uh time doing expansion uh in the
+wrong way so now the way we do expansion
+we always uh not rush it so we apply
+first for banking lense and we get
+banking lense and we're launching all
+the products and M that we have instead
+of our going MVP way launching some
+products so that's another uh big
+strategic decision
+decision that is the wrong and and so
+talking about expansion the US is uh you
+know so you launch in the Americas more
+broadly Brazil Mexico you know Colombia
+is coming and and a few others uh any
+learnings from those and then how does
+that apply to the US and H how you know
+what is your strategy to crack the US
+market which you haven't really cracked
+yet yeah so us is a uh is a credit card
+driven Market um so in uh Finance uh
+debit card card uh makes much less money
+compared to credit card on The
+Interchange interchange is fee that
+aerion pays you as an issuer so the way
+market is structured in the US uh
+everything is credit card driven there
+is 2% interchange so for every $100
+transaction uh bank is receiving uh $2
+in interchange and then Bank spends
+majority of these $2 on uh points or a
+mil or some benefits and then if you
+just launch a debit card interchange is
+only I don't know half% in us so you
+cannot really compete with credit card
+as a result if you're not a bank in US
+you cannot issue credit card onl you
+cannot win the market so in the US you
+need to be credit driven so yes we need
+to have a banking license to launch a
+product yeah as a as a customer of a US
+Bank I won't name names but I have to
+tell you that revolute is much needed uh
+in terms of experience it's uh it's it's
+basically where the UK banking system
+was 10 15 years ago so I can't wait for
+you to really make it there um talking
+about compliance and uh risk and
+compliance the other week I had some of
+your team come to present um and to demo
+what you built you know in house so we
+talked about building everything in
+house and you really built this
+incredible engine that ingest all rules
+and Regulation and can turn it into uh
+key risk indicators that you can track
+in real time then you can go back to the
+original the source of of of the risk
+indicator and um so first of all it's
+it's a really impressive tool that that
+you built and also Al what was
+interesting is that they were it was the
+the team that built it and that is in
+charge of compliance but they were also
+thinking about selling it to third
+parties so similar to revolute uh people
+the the the hiring man people
+Performance Management tool that you are
+selling you also now working on selling
+your core compliance and and risk engine
+so I'm CU about so it's a bit of a kind
+of AWS strategy of you you build your
+core product and then you sell them is
+that is that a core part of the future
+strategy do you think that's going to be
+big Revenue driver for the company and
+is there anything that you can't sell to
+third party that is too
+proprietary I mean as I said before I'm
+just trying things and you know
+hopefully some that will work I mean
+that's a very simple strategy so we
+build something and then we want to try
+to sell it to third parties and uh if
+third parties love it you know we we
+continue doing it so I don't know
+whether it will work or not in the
+future but uh now we just want to try to
+sell it awesome well I think we I think
+we're at time um that was fast yeah that
+was really quick I don't know if there
+is a transition or yeah I think we're
+good all right well thanks Nick thank
+you it's good to see you thank you
+thanks everyone
